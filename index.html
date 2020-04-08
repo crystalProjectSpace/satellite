@@ -30,19 +30,19 @@
 					},
 					{
 						m: 100,
-						kinematics : [7848.4, 0, 0, 0, -6.471 * 1E+6, 0], 
+						kinematics : [7848.26, 0, 0, 0, -6.471 * 1E+6, 0], 
 						lightWeight: false
 					}
 				])
 				
-				const testResult = testKeplerSystem.integrate(5200, 1)
+				const testResult = testKeplerSystem.integrate(5190, 1)
 				testResult.forEach((item, i) => {
-					if(i % 50 === 0) {
+					if(i % 10 === 0) {
 						const [Vx, Vy, Vz] = item.orbitPrm[1].slice(0, 3)
 						const [X, Y, Z] = item.orbitPrm[1].slice(3, 6)
 						const V = Math.sqrt(Vx * Vx + Vy * Vy + Vz * Vz)
 						const R = Math.sqrt(X * X + Y * Y + Z * Z) - 6.3711 * 1E+6
-						console.log(`t(s): ${item.Tau.toFixed(0)};  V(m/s): ${V.toFixed(1)}; H(km): ${R}`)
+						console.log(`t(s): ${item.Tau.toFixed(0)};  V(m/s): ${V.toFixed(1)}; H(km): ${R}; x: ${X}; y: ${Y}`)
 					}
 				})
 			})

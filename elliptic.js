@@ -35,38 +35,11 @@ class KeplerBody {
 	}
 	// извлечь скорость
 	getSpeed(){
-		return this.kinematics.slice(0, 3)
+		return [this.kinematics[0], this.kinematics[1], this.kinematics[2] ]
 	}
 	// извлечь координаты
 	getCoords(){
-		return this.kinematics.slice(3, 6)
-	}
-	// получить ускорения, действующие на тело при взаимодействии с другим объектом
-	accelerations(anotherBody) {
-		const [X0, Y0, Z0] = this.getCoords()
-		const [X1, Y1, Z1] = anotherBody.getCoords()
-		const dX = X1 - X0
-		const dY = Y1 - Y0
-		const dZ = Z1 - Z0
-		const range2 = dX * dX + dY * dY + dZ * dZ
-		const range = Math.sqrt(range2)
-		const range2_5 = range2 * range
-
-		const accelScalar1 = G0 * anotherBody.m / range2_5
-		const accelScalar2 = -G0 * this.m / range2_5
-		
-		return {
-			accel1: [
-				accelScalar1 * dX,
-				accelScalar1 * dY,
-				accelScalar1 * dZ,
-			],
-			accel2: [
-				accelScalar2 * dX,
-				accelScalar2 * dY,
-				accelScalar2 * dZ
-			]
-		}
+		return [this.kinematics[3], this.kinematics[4], this.kinematics[5] ]
 	}
 	// получить ускорения, действующие на тело при взаимодействии с другим объектом
 	accelerations(kineticSelf, kineticAnother, mAnother) {
@@ -79,21 +52,29 @@ class KeplerBody {
 		const range2 = dX * dX + dY * dY + dZ * dZ
 		const range = Math.sqrt(range2)
 		const range2_5 = range2 * range
-
-		const accelScalar1 = G0 * mAnother / range2_5
-		const accelScalar2 = -G0 * this.m / range2_5
 		
-		return {
-			accel1: [
+		const accelScalar1 = G0 * mAnother / range2_5
+		
+		if( this.lightweight ) {
+			return { accel1: [
 				accelScalar1 * dX,
 				accelScalar1 * dY,
 				accelScalar1 * dZ,
-			],
-			accel2: [
-				accelScalar2 * dX,
-				accelScalar2 * dY,
-				accelScalar2 * dZ
-			]
+			]}
+		} else {
+			const accelScalar2 = -G0 * this.m / range2_5
+			return {
+				accel1: [				// ускорение, получаемое телом от взаимодействия
+					accelScalar1 * dX,
+					accelScalar1 * dY,
+					accelScalar1 * dZ,
+				],
+				accel2: [				// ускорение, придаваемое второму телу, с которым взаимодействует основное
+					accelScalar2 * dX,
+					accelScalar2 * dY,
+					accelScalar2 * dZ
+				]
+			}			
 		}
 	}
 }
@@ -141,10 +122,11 @@ class KeplerSystem {
 				result[i][0] += accel1[0]
 				result[i][1] += accel1[1]
 				result[i][2] += accel1[2]
-				
-				result[j][0] += accel2[0]
-				result[j][1] += accel2[1]
-				result[j][2] += accel2[2]
+				if(accel2) {	// для маломассивных тел игнорируем оказываемые ими воздействия на другие объекты
+					result[j][0] += accel2[0]
+					result[j][1] += accel2[1]
+					result[j][2] += accel2[2]
+				}
 			}
 			result[i][3] = kinematics[i][0]
 			result[i][4] = kinematics[i][1]
@@ -159,8 +141,7 @@ class KeplerSystem {
 	}
 	// численное интегрирование уравнений движения группы тело
 	integrate(N, dT) {
-
-		
+		const timeStamp1 = performance.now()
 		let i = 0
 		let Tau = 0
 		const dT05 = dT * 0.5
@@ -207,6 +188,7 @@ class KeplerSystem {
 				kinematics[j][3] = kinematics0[j][3] + K2[j][3] * dT
 				kinematics[j][4] = kinematics0[j][4] + K2[j][4] * dT
 				kinematics[j][5] = kinematics0[j][5] + K2[j][5] * dT
+				//kinematics[j] = kinematics0[j].map((kinePrm, i1) => kinePrm + K2[j][i1] * dT)
 			}
 			
 			const K3 = this.getDerivatives(kinematics)
@@ -230,7 +212,8 @@ class KeplerSystem {
 				orbitPrm: step
 			})
 		}
-		
+		console.clear()
+		console.log(`dT(ms): ${performance.now() - timeStamp1};`)
 		return result
 	}
 }
