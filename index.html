@@ -3,6 +3,11 @@
 	<head>
 		<meta charset="utf-8" />
 		<script src="./elliptic.js"></script>
+		<script src="./Vect3D.js"></script>
+		<script src="./arraysExtended.js"></script>
+		<script src="./graphics.js"></script>
+		<script src="./TrajectoryAnalyze.js"></script>
+		<link rel="stylesheet" href="./style.css" />
 	</head>
 	<body>
 		<div class="main-wrap">
@@ -21,30 +26,53 @@
 		<footer></footer>
 		<script>
 			window.addEventListener('DOMContentLoaded', () => {
-				
+/* Функции для преобразования результатов расчета*/
+/* непосредственный расчет */			
+				// тестовый наблюдатель на 1 градусе северной широты , 1 градусе восточной долготы
+				const testObserver = Plane.observePlane(6.3711*1E6, 1.5/57.3, 1/57.3)
+
+				// тестовый спутник на НОО (100 км)
 				const testKeplerSystem = (new KeplerSystem()).init([
 					{
 						m: 5.972 * 1E+24,
 						kinematics : [0, 0, 0, 0, 0, 0], 
-						lightWeight: false
+						lightWeight: false,
+						ID: 'EARTH'
 					},
 					{
 						m: 100,
-						kinematics : [7848.26, 0, 0, 0, -6.471 * 1E+6, 0], 
-						lightWeight: false
+						kinematics : [7848.26, 0, 0, 0, -6.481 * 1E+6, 0], 
+						lightWeight: true,
+						ID: 'SAT'
 					}
 				])
 				
-				const testResult = testKeplerSystem.integrate(5190, 1)
-				testResult.forEach((item, i) => {
-					if(i % 10 === 0) {
-						const [Vx, Vy, Vz] = item.orbitPrm[1].slice(0, 3)
-						const [X, Y, Z] = item.orbitPrm[1].slice(3, 6)
-						const V = Math.sqrt(Vx * Vx + Vy * Vy + Vz * Vz)
-						const R = Math.sqrt(X * X + Y * Y + Z * Z) - 6.3711 * 1E+6
-						console.log(`t(s): ${item.Tau.toFixed(0)};  V(m/s): ${V.toFixed(1)}; H(km): ${R}; x: ${X}; y: ${Y}`)
-					}
-				})
+				const testInterpreter = new TrajectoryAnalyze()
+								
+				// Ч.И траектории за 5200 секунд с шагом 0.5с и запоминанием каждого 25-го шага
+				const integrateResult = testKeplerSystem.integrate(10400, 25, 0.5)				
+				
+				testInterpreter
+					.addTrajectory(integrateResult, 'SAT')
+					.addObserver(testObserver, 'OBS')
+					.setNorth(Vect3D.fromNumbers(0, 0, 1E15))
+				
+				const testGrapher = new grapher()
+				const objVisibility = testInterpreter.checkVisibility('OBS', 'SAT')
+
+				testGrapher
+					.init(document.querySelector('.output-canvas'))
+					.setRotations(45.01/57.3, 0.01/57.3, -45.01/57.3)
+								
+				const {xArr, yArr} = testGrapher.transformPointArray(testInterpreter.trajectories['SAT'].points)
+				
+				testGrapher
+					.setBounds(-1.*1E+7, 1.*1E+7, -1.*1E+7, 1.*1E+7)
+					.adjust()
+					.draw3DAxis (0.75*1E7, 0.75*1E7, 0.75*1E7)
+					.drawGraphic(xArr, yArr)
+					.drawGlobe(6.3711*1E+6)
+
 			})
 		</script>
 	</body>

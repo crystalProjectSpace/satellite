@@ -1,0 +1,14 @@
+* {
+	margin: 0px;
+	padding: 0px;
+	border: none;
+	outline: none;
+	text-decoration: none;
+	box-sizing: border-box;
+}
+
+canvas {
+	display: block;
+	border: 1px solid #000;
+	margin: 15px auto;
+}

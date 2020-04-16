@@ -16,10 +16,11 @@ class KeplerBody {
 		]
 		
 		this.m = 0 // масса
+		this.ID = '' // ID тела, произвольная строка
 		this.lightweight = false // объект маломассивный, 
 	}
 	// заполнить исходными данными
-	init(m, Vx, Vy, Vz, X, Y, Z, isLightweight){
+	init(m, Vx, Vy, Vz, X, Y, Z, isLightweight, ID){
 		this.kinematics[0] = Vx
 		this.kinematics[1] = Vy
 		this.kinematics[2] = Vz
@@ -30,6 +31,8 @@ class KeplerBody {
 		this.m = m
 		
 		this.lightweight = isLightweight
+		
+		this.ID = ID
 		
 		return this
 	}
@@ -90,7 +93,7 @@ class KeplerSystem {
 		this.nBody = orbData.length
 		orbData.forEach(orbBody => {
 			this.bodies.push(
-				(new KeplerBody()).init(orbBody.m, ...orbBody.kinematics, orbBody.lightWeight)
+				(new KeplerBody()).init(orbBody.m, ...orbBody.kinematics, orbBody.lightWeight, orbBody.ID)
 			)
 		})
 		
@@ -140,26 +143,28 @@ class KeplerSystem {
 		return result		
 	}
 	// численное интегрирование уравнений движения группы тело
-	integrate(N, dT) {
-		const timeStamp1 = performance.now()
+	integrate(N, frequency, dT) {
 		let i = 0
 		let Tau = 0
+		let k = 1
 		const dT05 = dT * 0.5
 		const dT06 = dT * 0.1666666667
 		
 		const result = [{
 			Tau,
-			orbitPrm: this.bodies.map(body => body.kinematics).slice()
+			orbitPrm: {}
 		}]
 		
+		const kinematics = []
+		
+		this.bodies.forEach(body => {
+			result[0].orbitPrm[body.ID] = body.kinematics.slice()
+			kinematics.push(body.kinematics.slice())
+		})
+
+		const kinematics0 = kinematics.map(kineItem => kineItem.slice())
+		
 		while( i < N ) {
-			const kinematics = []
-			const kinematics0 = []
-			for(let j = 0; j <this.nBody; j++) {
-				kinematics.push(result[i].orbitPrm[j].slice())
-				kinematics0.push(kinematics[j].slice())
-			} 
-			
 			const K0 = this.getDerivatives(kinematics)
 			for(let j = 0; j < this.nBody; j++) {
 				kinematics[j][0] = kinematics0[j][0] + K0[j][0] * dT05
@@ -188,32 +193,50 @@ class KeplerSystem {
 				kinematics[j][3] = kinematics0[j][3] + K2[j][3] * dT
 				kinematics[j][4] = kinematics0[j][4] + K2[j][4] * dT
 				kinematics[j][5] = kinematics0[j][5] + K2[j][5] * dT
-				//kinematics[j] = kinematics0[j].map((kinePrm, i1) => kinePrm + K2[j][i1] * dT)
 			}
 			
 			const K3 = this.getDerivatives(kinematics)
 			
-			const step = []
 			for(let j = 0; j < this.nBody; j++) {
-				step.push([
-					kinematics0[j][0] + (K0[j][0] + 2 * (K1[j][0] + K2[j][0]) + K3[j][0] ) * dT06,
-					kinematics0[j][1] + (K0[j][1] + 2 * (K1[j][1] + K2[j][1]) + K3[j][1] ) * dT06,
-					kinematics0[j][2] + (K0[j][2] + 2 * (K1[j][2] + K2[j][2]) + K3[j][2] ) * dT06,
-					kinematics0[j][3] + (K0[j][3] + 2 * (K1[j][3] + K2[j][3]) + K3[j][3] ) * dT06,
-					kinematics0[j][4] + (K0[j][4] + 2 * (K1[j][4] + K2[j][4]) + K3[j][4] ) * dT06,
-					kinematics0[j][5] + (K0[j][5] + 2 * (K1[j][5] + K2[j][5]) + K3[j][5] ) * dT06					
-				])
+				kinematics[j][0] = kinematics0[j][0] + (K0[j][0] + 2 * (K1[j][0] + K2[j][0]) + K3[j][0] ) * dT06
+				kinematics[j][1] = kinematics0[j][1] + (K0[j][1] + 2 * (K1[j][1] + K2[j][1]) + K3[j][1] ) * dT06
+				kinematics[j][2] = kinematics0[j][2] + (K0[j][2] + 2 * (K1[j][2] + K2[j][2]) + K3[j][2] ) * dT06
+				kinematics[j][3] = kinematics0[j][3] + (K0[j][3] + 2 * (K1[j][3] + K2[j][3]) + K3[j][3] ) * dT06
+				kinematics[j][4] = kinematics0[j][4] + (K0[j][4] + 2 * (K1[j][4] + K2[j][4]) + K3[j][4] ) * dT06
+				kinematics[j][5] = kinematics0[j][5] + (K0[j][5] + 2 * (K1[j][5] + K2[j][5]) + K3[j][5] ) * dT06
+				kinematics0[j][0] = kinematics[j][0]
+				kinematics0[j][1] = kinematics[j][1] 
+				kinematics0[j][2] = kinematics[j][2]
+				kinematics0[j][3] = kinematics[j][3] 
+				kinematics0[j][4] = kinematics[j][4]
+				kinematics0[j][5] = kinematics[j][5] 				
 			}
+			
 			Tau += dT
 			i++
 
-			result.push({
-				Tau,
-				orbitPrm: step
-			})
+			if(k === frequency) {
+				const orbitPrm = {}//[]
+				for(let j = 0; j < this.nBody; j++) {
+					orbitPrm[this.bodies[j].ID] = [
+						kinematics[j][0],
+						kinematics[j][1],
+						kinematics[j][2],
+						kinematics[j][3],
+						kinematics[j][4],
+						kinematics[j][5]
+					]				
+				}
+				result.push({
+					Tau,
+					orbitPrm
+				})
+				k = 1
+			} else {
+				k++
+			}
 		}
-		console.clear()
-		console.log(`dT(ms): ${performance.now() - timeStamp1};`)
+
 		return result
 	}
 }
