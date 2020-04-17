@@ -62,6 +62,11 @@ class grapher {
 		
 		return this
 	}
+// зачистить канву
+	clear() {
+		this.canvas.width = this.canvas.width
+		return this
+	}
 // изменить цвет линии графика
 	setLineColor(color)
 	{
@@ -242,6 +247,25 @@ class grapher {
 		
 		return this
 	}
+	// отрисовать точку 
+	drawPoint(X, Y, Z) {
+		const [X_screen, Y_screen] = this.set3DtoScreen(X, Y, Z)
+
+		this.context.strokeStyle = this.tickStyle.color
+		this.context.lineWidth = this.tickStyle.width
+		
+		const tickOffset = this.tickStyle.size / 2
+		this.context.beginPath()
+		this.context.moveTo(X_screen - tickOffset, Y_screen)
+		this.context.lineTo(X_screen + tickOffset, Y_screen)
+		this.context.stroke()
+		this.context.beginPath()
+		this.context.moveTo(X_screen, Y_screen - tickOffset)
+		this.context.lineTo(X_screen, Y_screen + tickOffset)
+		this.context.stroke()
+		
+		return this
+	}
 	//преобразовать произвольный набор трех координат к экранным
 	set3DtoScreen(X, Y, Z) {
 		const [X_r, Y_r] = (Vect3D.fromNumbers(X, Y, Z)).matrixMult(this.rotations)
@@ -279,5 +303,9 @@ class grapher {
 		this.context.stroke()
 		
 		return this
+	}
+	// отрисовать анимацию движения объекта
+	drawAnimated(xArr, yArr, tFrame) {
+		
 	}
 }

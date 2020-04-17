@@ -24,6 +24,40 @@ class ArrayExtended extends Array {
 		}
 		return this
 	}
+	// проредить массив со скважностью N
+	sift(N) {
+		const kMax = math.floor(this.length / N)
+		const result = new ArrayExtended()
+		let delta = 0
+		for(let k = 0; k < kMax; k++) {
+			result.push(this[delta])
+			delta += N
+		}
+		return result
+	}
+	// собрать статистику по элемента массива
+	getStatistics() {
+		const iMax = this.length
+		let meanValue = this[0]
+		let dispersion = 0
+		
+		for(let i = 1; i < iMax; i++) {
+			meanValue += this[i]
+		}
+		
+		meanValue /= iMax
+
+		for(let i = 0; i < iMax; i++) {
+			const delta = this[i] - meanValue
+			dispersion += (delta * delta)
+		}
+		
+		dispersion /= iMax
+		return {
+			meanValue,
+			dispersion
+		}
+	}
 	// сформировать расширенный массив из диапазона чисел внутри отрезка
 	static getInterval(x0, x1, N) {
 		const result = new ArrayExtended()
@@ -40,5 +74,14 @@ class ArrayExtended extends Array {
 	static extendArray(arr) {
 		const result = new ArrayExtended()
 		return result.takeValues(arr)
+	}
+	// извлечь из таблицы именованную колонку
+	static extractColumn(tab, colId) {
+		const result = new ArrayExtended()
+		const iMax = tab.length
+		for(let i = 0; i < iMax; i++) {
+			result.push(tab[i][colId])
+		}
+		return result
 	}
 }

@@ -18,7 +18,7 @@
 						class="output-canvas"
 						height="750"
 						width="750" ></canvas>
-					<div class="output-telemtry">
+					<div class="output-telemetry">
 					</div>	
 				</div>
 			</main>
@@ -27,6 +27,58 @@
 		<script>
 			window.addEventListener('DOMContentLoaded', () => {
 /* Функции для преобразования результатов расчета*/
+				const outputTable = (colFormat, data, header, id) => {
+					const resultWrap = document.createElement('div') 
+					const resultTab = document.createElement('table')
+					const resultHeader = document.createElement('thead')
+					const resultBody = document.createElement('tbody')
+					const headerRow = document.createElement('tr')
+					
+					colFormat.forEach(key => {
+						const headCell = document.createElement('th')
+						headCell.innerText = `${key.name}, ${key.unit}`
+						headerRow.appendChild(headCell)
+					})
+					resultHeader.appendChild(headerRow)
+					
+					data.forEach(dataStr => {
+						const dataRow = document.createElement('tr')
+						colFormat.forEach(key => {
+							const cell = document.createElement('td')
+							cell.innerText = dataStr[key.ID].toFixed(key.format)
+							dataRow.appendChild(cell)
+						})
+						resultBody.appendChild(dataRow)
+					})
+					
+					if( header) {
+						const headerH = document.createElement('h3')
+						headerH.innerText = header
+						resultWrap.appendChild(headerH)
+					}
+					
+					if( id ) {
+						resultWrap.id = id
+					}
+					
+					resultTab.appendChild(resultHeader)
+					resultTab.appendChild(resultBody)
+					resultWrap.appendChild(resultTab)
+					
+					resultWrap.classList.add('output-telemetry__container')
+					
+					return resultWrap
+				}
+				
+				const writeStatistics = ({meanValue, dispersion}, precision) => {
+					const result = document.createElement('div')
+					result.classList.add('output-telemetry__statistics')
+					
+					const relDeviation = 100 * Math.sqrt(dispersion) / meanValue
+					
+					result.innerHTML = '<p>Оценка ошибки, вызванной приближенным методом расчета заметаемой площади.</p><p>Отношение среднеквад.отклонения к мат.ожиданию: ' + relDeviation.toFixed(precision) + '%;</p>' 
+					return result
+				}
 /* непосредственный расчет */			
 				// тестовый наблюдатель на 1 градусе северной широты , 1 градусе восточной долготы
 				const testObserver = Plane.observePlane(6.3711*1E6, 1.5/57.3, 1/57.3)
@@ -44,34 +96,76 @@
 						kinematics : [7848.26, 0, 0, 0, -6.481 * 1E+6, 0], 
 						lightWeight: true,
 						ID: 'SAT'
+					},
+					{
+						m: 100,
+						kinematics : [8848.26, 0, 0, 0, -6.881 * 1E+6, 0], 
+						lightWeight: true,
+						ID: 'SAT2'
 					}
 				])
 				
-				const testInterpreter = new TrajectoryAnalyze()
-								
-				// Ч.И траектории за 5200 секунд с шагом 0.5с и запоминанием каждого 25-го шага
-				const integrateResult = testKeplerSystem.integrate(10400, 25, 0.5)				
+				const testInterpreter = new TrajectoryAnalyze() // блок анализа результатов траекторного расчета
 				
+				const integrateResult = testKeplerSystem.integrate(8250, 40, 0.5) // Ч.И траектории за 5200 секунд с шагом 0.5с и запоминанием каждого 25-го шага	
+
 				testInterpreter
 					.addTrajectory(integrateResult, 'SAT')
+					.addTrajectory(integrateResult, 'SAT2')
 					.addObserver(testObserver, 'OBS')
 					.setNorth(Vect3D.fromNumbers(0, 0, 1E15))
 				
 				const testGrapher = new grapher()
-				const objVisibility = testInterpreter.checkVisibility('OBS', 'SAT')
+				const objVisibility = testInterpreter.checkVisibility('OBS', 'SAT', [0, 0, 0], 6.3711*1E+6)
+				const objVisibility2 = testInterpreter.checkVisibility('OBS', 'SAT2', [0, 0, 0], 6.3711*1E+6)
 
+				const sweep2 = testInterpreter.checkSweep('SAT2', Vect3D.fromNumbers(0, 0, 0), 4)
+				
 				testGrapher
 					.init(document.querySelector('.output-canvas'))
 					.setRotations(45.01/57.3, 0.01/57.3, -45.01/57.3)
 								
-				const {xArr, yArr} = testGrapher.transformPointArray(testInterpreter.trajectories['SAT'].points)
+				const TR1 = testGrapher.transformPointArray(testInterpreter.trajectories['SAT'].points)
+				const TR2 = testGrapher.transformPointArray(testInterpreter.trajectories['SAT2'].points)
 				
 				testGrapher
-					.setBounds(-1.*1E+7, 1.*1E+7, -1.*1E+7, 1.*1E+7)
+					.setBounds(-1.5*1E+7, 1.5*1E+7, -1.5*1E+7, 1.5*1E+7)
 					.adjust()
 					.draw3DAxis (0.75*1E7, 0.75*1E7, 0.75*1E7)
-					.drawGraphic(xArr, yArr)
+					.drawGraphic(TR1.xArr, TR1.yArr)
+					.drawGraphic(TR2.xArr, TR2.yArr)
 					.drawGlobe(6.3711*1E+6)
+					.drawPoint(...testObserver.point)
+					
+				const outputBox = document.querySelector('.output-telemetry')
+				const areas = ArrayExtended.extractColumn(sweep2, 'areaSwipe')
+				const areaStats = areas.getStatistics()
+				
+				outputBox.appendChild(outputTable([
+					{ ID: 'dt', name: 'Время', unit: 's', format: 0 },
+					{ ID: 'areaSwipe', name: 'Площадь', unit: 'm2', format: 0 }
+					],
+					sweep2,
+					'Заметаемые площади (III закон Кеплера), спутник-2 (эллипт.орбита)',
+					'area-box'
+				))
+				
+				outputBox.appendChild(outputTable([
+					{ ID: 't', name: 'Время', unit: 'с', format: 1 },
+					{ ID: 'ascend', name: 'Возвышение', unit: 'рад', format: 2 },
+					{ ID: 'azimuth', name: 'Азимут', unit: 'рад', format: 2 },
+					{ ID: 'range', name: 'Дальность', unit: 'м', format: 0 },
+					],
+					objVisibility,
+					'Видимость спутника-1(круговая орбита) из точки North: 1.5`, East: 1.5`',
+					'visibility-box'
+				))
+				
+				document
+					.getElementById('area-box')
+					.appendChild(writeStatistics(areaStats, 3))
+				
+				
 
 			})
 		</script>

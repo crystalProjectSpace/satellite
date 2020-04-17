@@ -113,6 +113,14 @@ class Vect3D extends Array {
 		
 		return Math.sqrt(dX * dX + dY * dY + dZ * dZ)
 	}
+// площадь треугольника между текущей точкой и еще двумя другими
+	triangleHeron(B, C) {
+		const AB = this.subVect(B).absVect()
+		const AC = this.subVect(C).absVect()
+		const BC = B.subVect(C).absVect()
+		const P = 0.5 * (AB + AC + BC)
+		return Math.sqrt(P * (P - AB) * (P - AC) * (P - BC))
+	}
 }
 // Класс плоскости в трехмерном пространстве
 class Plane {
@@ -190,6 +198,5 @@ class Line {
 		this.point.getVect(...A)
 		this.line = B.subVect(A).normalize()
 		return this
-	}
-	
+	}	
 }
