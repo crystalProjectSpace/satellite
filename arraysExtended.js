@@ -35,7 +35,7 @@ class ArrayExtended extends Array {
 		}
 		return result
 	}
-	// собрать статистику по элемента массива
+	// собрать статистику по элемента массива (мат.ожидание и дисперсия)
 	getStatistics() {
 		const iMax = this.length
 		let meanValue = this[0]

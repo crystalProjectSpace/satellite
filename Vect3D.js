@@ -169,10 +169,10 @@ class Plane {
 		let angleSign = signVect[0]
 		angleSign = Math.abs(signVect[1]) > Math.abs(angleSign) ? signVect[1] : angleSign
 		angleSign = Math.abs(signVect[2]) > Math.abs(angleSign) ? signVect[2] : angleSign
-		
+
 		return Math.sign(angleSign) === this.normSign ?
-			directNorth.getAngle(directPoint) :
-			2 * Math.PI - directNorth.getAngle(directPoint)			
+			(angleSign > 0 ? 2 * Math.PI - directNorth.getAngle(directPoint) : directNorth.getAngle(directPoint)) :
+			(angleSign < 0 ?  directNorth.getAngle(directPoint) : 2 * Math.PI - directNorth.getAngle(directPoint))			
 	}
 	// возвышение точки над горизонтом
 	ascend(point) {

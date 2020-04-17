@@ -107,7 +107,7 @@
 				
 				const testInterpreter = new TrajectoryAnalyze() // блок анализа результатов траекторного расчета
 				
-				const integrateResult = testKeplerSystem.integrate(8250, 40, 0.5) // Ч.И траектории за 5200 секунд с шагом 0.5с и запоминанием каждого 25-го шага	
+				const integrateResult = testKeplerSystem.integrate(3250, 40, 0.5) // Ч.И траектории за 5200 секунд с шагом 0.5с и запоминанием каждого 25-го шага	
 
 				testInterpreter
 					.addTrajectory(integrateResult, 'SAT')
@@ -117,13 +117,12 @@
 				
 				const testGrapher = new grapher()
 				const objVisibility = testInterpreter.checkVisibility('OBS', 'SAT', [0, 0, 0], 6.3711*1E+6)
-				const objVisibility2 = testInterpreter.checkVisibility('OBS', 'SAT2', [0, 0, 0], 6.3711*1E+6)
-
+				
 				const sweep2 = testInterpreter.checkSweep('SAT2', Vect3D.fromNumbers(0, 0, 0), 4)
 				
 				testGrapher
 					.init(document.querySelector('.output-canvas'))
-					.setRotations(45.01/57.3, 0.01/57.3, -45.01/57.3)
+					.setRotations(45.01/57.3, 0.01/57.3, -255.01/57.3)
 								
 				const TR1 = testGrapher.transformPointArray(testInterpreter.trajectories['SAT'].points)
 				const TR2 = testGrapher.transformPointArray(testInterpreter.trajectories['SAT2'].points)
@@ -146,7 +145,7 @@
 					{ ID: 'areaSwipe', name: 'Площадь', unit: 'm2', format: 0 }
 					],
 					sweep2,
-					'Заметаемые площади (III закон Кеплера), спутник-2 (эллипт.орбита)',
+					'Заметаемые площади (II закон Кеплера), спутник-2 (эллипт.орбита)',
 					'area-box'
 				))
 				
