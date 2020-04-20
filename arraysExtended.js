@@ -4,13 +4,15 @@ class ArrayExtended extends Array {
 	// получить граничные величины в массиве
 	getExtrems() {
 		const lMax = this.length
-		const result = {min: this[0], max: this[0]}
+		const result = {min: this[0], max: this[0], i0: 0, i1: 0}
 		
 		for(let i = 1; i < lMax; i++) {
 			if(this[i] < result.min) {
 				result.min = this[i]
+				i0 = i
 			} else if (this[i] > result.max) {
 				result.max = this[i]
+				i1 = i
 			}
 		}
 		

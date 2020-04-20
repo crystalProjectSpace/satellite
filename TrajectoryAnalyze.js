@@ -88,4 +88,77 @@ class TrajectoryAnalyze {
 		}
 		return result
 	}
+	// получить основные траекторные параметры (полуоси, эскцентриситет)
+	getOrbitPrm(objectID, localZERO) {
+		const {points, timestamps} = this.trajectories[objectID]
+		const iMax = points.length
+		const cr0 = points[0]
+		
+		let tauOrbit = 0
+		let deltaStart = 0
+		
+		const r0 = points[0].subVect(localZERO).absVect()
+		const dR1 = points[0].subVect(points[1]).absVect()
+
+		let rMax = r0
+		let rMin = r0
+		
+		let iRmax = 0
+		let iRmin = 0
+		// проходимся по массиву точек, пока не будет точка с координатами, максимально близкими к начальной
+		for(let i = 1; i < iMax; i++) {
+			const dR = points[i].subVect(localZERO).absVect()
+			
+			if(dR > rMax ) {
+				rMax = dR
+				iRmax = i
+			} else if (dR < rMin) {
+				rMin = dR
+				iRmin = i
+			}
+			
+			if(points[i].subVect(cr0).absVect() < dR1 && !tauOrbit) {
+				tauOrbit = timestamps[i] - timestamps[0]
+			}
+		}
+		
+		const axisMajor = (rMax + rMin) * 0.5
+		
+		let i0 = Math.min(iRmax, iRmin)
+		let i1 = Math.max(iRmax, iRmin)
+		let axisMinor = 0
+		
+		const axisMajorLine = (new Line()).setFromPoints(points[i0], points[i1])
+		// методом дихотомии проходимся по массиву точек, чтобы найти малую полуось
+		// точка на траектории, максимально удаленная от большей полуоси эллписа
+		while(Math.abs(i0 - i1) > 1) {
+			const i_05 = Math.floor((i0 + i1)/2)
+
+			const delta1 = axisMajorLine
+				.projectPoint(points[i_05 - 1])
+				.subVect(points[i_05 - 1])
+				.absVect()
+
+			const delta2 = axisMajorLine
+				.projectPoint(points[i_05 + 1])
+				.subVect(points[i_05 + 1])
+				.absVect()
+			
+			axisMinor = 0.5 * (delta1 + delta2)
+			
+			delta2 > delta1 ? i0 = i_05 : i1 = i_05
+		}
+		
+		const axisRel = axisMinor / axisMajor
+		const excen = Math.sqrt(1 - axisRel * axisRel)
+		
+		return {
+			axisMajor,
+			axisMinor,
+			excen,
+			pFocus: axisMinor*axisRel,
+			tauOrbit
+		}
+
+	}
 }

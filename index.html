@@ -107,7 +107,7 @@
 				
 				const testInterpreter = new TrajectoryAnalyze() // блок анализа результатов траекторного расчета
 				
-				const integrateResult = testKeplerSystem.integrate(3250, 40, 0.5) // Ч.И траектории за 5200 секунд с шагом 0.5с и запоминанием каждого 25-го шага	
+				const integrateResult = testKeplerSystem.integrate(22250, 4, 0.5) // Ч.И траектории за 5200 секунд с шагом 0.5с и запоминанием каждого 25-го шага	
 
 				testInterpreter
 					.addTrajectory(integrateResult, 'SAT')
@@ -118,7 +118,13 @@
 				const testGrapher = new grapher()
 				const objVisibility = testInterpreter.checkVisibility('OBS', 'SAT', [0, 0, 0], 6.3711*1E+6)
 				
-				const sweep2 = testInterpreter.checkSweep('SAT2', Vect3D.fromNumbers(0, 0, 0), 4)
+				//const sweep2 = testInterpreter.checkSweep('SAT2', Vect3D.fromNumbers(0, 0, 0), 4)
+				
+				const orbitPrm1 = testInterpreter.getOrbitPrm('SAT', Vect3D.fromNumbers(0, 0, 0))
+				const orbitPrm2 = testInterpreter.getOrbitPrm('SAT2', Vect3D.fromNumbers(0, 0, 0))
+				
+				console.log(orbitPrm1)
+				console.log(orbitPrm2)
 				
 				testGrapher
 					.init(document.querySelector('.output-canvas'))
@@ -136,11 +142,11 @@
 					.drawGlobe(6.3711*1E+6)
 					.drawPoint(...testObserver.point)
 					
-				const outputBox = document.querySelector('.output-telemetry')
-				const areas = ArrayExtended.extractColumn(sweep2, 'areaSwipe')
-				const areaStats = areas.getStatistics()
+				//const outputBox = document.querySelector('.output-telemetry')
+				//const areas = ArrayExtended.extractColumn(sweep2, 'areaSwipe')
+				//const areaStats = areas.getStatistics()
 				
-				outputBox.appendChild(outputTable([
+				/*outputBox.appendChild(outputTable([
 					{ ID: 'dt', name: 'Время', unit: 's', format: 0 },
 					{ ID: 'areaSwipe', name: 'Площадь', unit: 'm2', format: 0 }
 					],
@@ -158,12 +164,12 @@
 					objVisibility,
 					'Видимость спутника-1(круговая орбита) из точки North: 1.5`, East: 1.5`',
 					'visibility-box'
-				))
+				))*/
 				
-				document
+				/*document
 					.getElementById('area-box')
 					.appendChild(writeStatistics(areaStats, 3))
-				
+				*/
 				
 
 			})

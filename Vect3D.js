@@ -196,7 +196,12 @@ class Line {
 	// построить прямую по двум точкам
 	setFromPoints(A, B) {
 		this.point.getVect(...A)
-		this.line = B.subVect(A).normalize()
+		this.direct = B.subVect(A).normalize()
 		return this
-	}	
+	}
+	// Спроецировать точку на прямую
+	projectPoint(A) {
+		const t = this.direct.dotProduct(A.subVect(this.point)) / this.direct.dotProduct(this.direct)
+		return this.point.sumVect(this.direct.multScalar(t))		
+	}
 }
