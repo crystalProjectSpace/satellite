@@ -1,8 +1,18 @@
 // класс для хранения и промежуточного анализа данных
 class TrajectoryAnalyze {
+	// глобальная плоскость эклиптики
+	static globalEcliptic() {
+		return (new Plane()).setFromPoints(
+			Vect3D.fromNumbers(0, 0, 0),
+			Vect3D.fromNumbers(1, 0, 0),
+			Vect3D.fromNumbers(0, 1, 0)
+		)
+	}
+	
 	constructor() {
 		this.trajectories = {} // траекторные данные подвижных объектов
 		this.observers = {} // неподвижные наблюдатели
+		this.relativeTrajectories = [] // траектории объектов в относительном движении
 		this.NORTH = null
 	}
 	setNorth(north) {
@@ -92,10 +102,8 @@ class TrajectoryAnalyze {
 	getOrbitPrm(objectID, localZERO) {
 		const {points, timestamps} = this.trajectories[objectID]
 		const iMax = points.length
-		const cr0 = points[0]
 		
 		let tauOrbit = 0
-		let deltaStart = 0
 		
 		const r0 = points[0].subVect(localZERO).absVect()
 		const dR1 = points[0].subVect(points[1]).absVect()
@@ -117,7 +125,7 @@ class TrajectoryAnalyze {
 				iRmin = i
 			}
 			
-			if(points[i].subVect(cr0).absVect() < dR1 && !tauOrbit) {
+			if(points[i].subVect(points[0]).absVect() < dR1 && !tauOrbit) {
 				tauOrbit = timestamps[i] - timestamps[0]
 			}
 		}
@@ -127,6 +135,12 @@ class TrajectoryAnalyze {
 		let i0 = Math.min(iRmax, iRmin)
 		let i1 = Math.max(iRmax, iRmin)
 		let axisMinor = 0
+		
+		/*const orbitPlane = (new Plane()).setFromPoints(
+			points[i0],
+			localZERO,
+			points[Math.floor(i0 + i1)]
+		)*/
 		
 		const axisMajorLine = (new Line()).setFromPoints(points[i0], points[i1])
 		// методом дихотомии проходимся по массиву точек, чтобы найти малую полуось
@@ -153,12 +167,36 @@ class TrajectoryAnalyze {
 		const excen = Math.sqrt(1 - axisRel * axisRel)
 		
 		return {
+			periapsis: rMin,
+			apoapsis: rMax,
 			axisMajor,
 			axisMinor,
 			excen,
 			pFocus: axisMinor*axisRel,
-			tauOrbit
+			//inclination: orbitPlane.planeAngle(TrajectoryAnalyze.globalEcliptic()),
+			tauOrbit			
 		}
-
+	}
+	// относительные перемещения объектов
+	addRelativeOrbit(relObjectID, refObjectID) {
+		const pointsRL = this.trajectories[relObjectID].points
+		const {timestamps} = this.trajectories[relObjectID]
+		const pointsRF = this.trajectories[refObjectID].points
+		const relTraj = {
+			timestamps,
+			relObjectID,
+			refObjectID,
+			points: [],
+			speed: []
+		}
+		
+		const iMax = pointsRF.length
+		
+		for(let i = 0; i < iMax; i++) {
+			relTraj.points.push(pointsRL[i].subVect(pointsRF[i]))
+		}
+		
+		this.relativeTrajectories.push(relTraj)
+		return this
 	}
 }

@@ -178,6 +178,10 @@ class Plane {
 	ascend(point) {
 		return 0.5 * Math.PI - this.norm.getAngle(point.subVect(this.point))
 	}
+	// угол между двумя плоскостями
+	planeAngle(plane) {
+		return this.norm.getAngle(plane.norm)
+	}
 	// создать плоскость, касательную к заданной точке (W, L) на сфере радиусом R
 	static observePlane(R, W, L) {
 		const result = new Plane()

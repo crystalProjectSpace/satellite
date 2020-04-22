@@ -16,8 +16,8 @@
 				<div class="output">
 					<canvas
 						class="output-canvas"
-						height="750"
-						width="750" ></canvas>
+						height="1250"
+						width="1250" ></canvas>
 					<div class="output-telemetry">
 					</div>	
 				</div>
@@ -27,6 +27,7 @@
 		<script>
 			window.addEventListener('DOMContentLoaded', () => {
 /* Функции для преобразования результатов расчета*/
+				// сформировать таблицу с перечнем параметров
 				const outputTable = (colFormat, data, header, id) => {
 					const resultWrap = document.createElement('div') 
 					const resultTab = document.createElement('table')
@@ -45,7 +46,7 @@
 						const dataRow = document.createElement('tr')
 						colFormat.forEach(key => {
 							const cell = document.createElement('td')
-							cell.innerText = dataStr[key.ID].toFixed(key.format)
+							cell.innerText = (key.koef ? dataStr[key.ID] * key.koef : dataStr[key.ID]).toFixed(key.format)
 							dataRow.appendChild(cell)
 						})
 						resultBody.appendChild(dataRow)
@@ -69,7 +70,7 @@
 					
 					return resultWrap
 				}
-				
+				// сформировать краткую сводку
 				const writeStatistics = ({meanValue, dispersion}, precision) => {
 					const result = document.createElement('div')
 					result.classList.add('output-telemetry__statistics')
@@ -79,6 +80,55 @@
 					result.innerHTML = '<p>Оценка ошибки, вызванной приближенным методом расчета заметаемой площади.</p><p>Отношение среднеквад.отклонения к мат.ожиданию: ' + relDeviation.toFixed(precision) + '%;</p>' 
 					return result
 				}
+				// сформировать таблицу-список
+				const prmListTable = (rowFormat, data, header, id) => {
+					const result = document.createElement('div')
+					
+					result.classList.add('output-telemetry__orbit_prm')
+					
+					if (id) {
+						result.id = id
+					}
+					
+					if (header) {
+						const tabHeader = document.createElement('h3')
+						tabHeader.innerText = header
+						result.appendChild(tabHeader)
+					}
+					
+					const resultTab = document.createElement('table')
+					
+					for(let id in data) {
+						const {name, unit, format, koef} = rowFormat.find(row => row.ID === id)
+						const dataRow = document.createElement('tr')
+						
+						const dataName = document.createElement('td')
+						dataName.innerText = `${name}, ${unit}: `
+						
+						const dataVal = document.createElement('td')
+						dataVal.innerText = (koef ? data[id] * koef : data[id]).toFixed(format)
+						
+						dataRow.appendChild(dataName)
+						dataRow.appendChild(dataVal)
+						
+						resultTab.appendChild(dataRow)
+					}
+					
+					result.appendChild(resultTab)
+					return result
+				}
+/* параметры для вывода таблиц с данными */
+				// таблица с параметрами орбиты
+				const orbPrmFormat = [
+					{ ID: 'periapsis', name: 'Периапсис', unit: 'км', format: 0, koef: 1E-3 },
+					{ ID: 'apoapsis', name: 'Апоапсис', unit: 'км', format: 0, koef: 1E-3 },
+					{ ID: 'axisMajor', name: 'Большая полуось', unit: 'км', format: 0, koef: 1E-3 },
+					{ ID: 'axisMinor', name: 'Меньшая полуось', unit: 'км', format: 0, koef: 1E-3 },
+					{ ID: 'excen', name: 'Эксцентриситет', unit: '-', format: 4 },
+					{ ID: 'pFocus', name: 'Фокальный параметр', unit: 'км', format: 0, koef: 1E-3 },
+					{ ID: 'tauOrbit', name: 'Период обращения', unit: 'с', format: 0 },
+					{ ID: 'inclination', name: 'Наклонение', unit: 'град', format: 2, koef: 57.295 }
+				]
 /* непосредственный расчет */			
 				// тестовый наблюдатель на 1 градусе северной широты , 1 градусе восточной долготы
 				const testObserver = Plane.observePlane(6.3711*1E6, 1.5/57.3, 1/57.3)
@@ -92,85 +142,94 @@
 						ID: 'EARTH'
 					},
 					{
-						m: 100,
-						kinematics : [7848.26, 0, 0, 0, -6.481 * 1E+6, 0], 
-						lightWeight: true,
-						ID: 'SAT'
+						m: 7.3477*1E+22,
+						kinematics : [990, 0, 1, 0, -4.05696 * 1E+8, 0], 
+						lightWeight: false,
+						ID: 'MOON'
 					},
 					{
 						m: 100,
-						kinematics : [8848.26, 0, 0, 0, -6.881 * 1E+6, 0], 
+						kinematics : [800.26, -175, 0, -0.75*1E+8, -4.01965 * 1E+8, 0], 
 						lightWeight: true,
 						ID: 'SAT2'
+					},
+					{
+						m: 100,
+						kinematics : [800.26, -175, 0, -0.41*1E+8, -4.01966 * 1E+8, 0], 
+						lightWeight: true,
+						ID: 'SAT3'
 					}
 				])
 				
 				const testInterpreter = new TrajectoryAnalyze() // блок анализа результатов траекторного расчета
-				
-				const integrateResult = testKeplerSystem.integrate(22250, 4, 0.5) // Ч.И траектории за 5200 секунд с шагом 0.5с и запоминанием каждого 25-го шага	
+				// Ч.И траектории за 20000 секунд с шагом 0.5с и запоминанием каждого 4-го шага
+				const integrateResult = testKeplerSystem.integrate(
+					(kinematcis, Tau) => Tau < 3600*24*4,
+					10,
+					2.5) 	
 
 				testInterpreter
-					.addTrajectory(integrateResult, 'SAT')
+					.addTrajectory(integrateResult, 'MOON')
+					.addTrajectory(integrateResult, 'EARTH')
 					.addTrajectory(integrateResult, 'SAT2')
+					.addTrajectory(integrateResult, 'SAT3')
 					.addObserver(testObserver, 'OBS')
 					.setNorth(Vect3D.fromNumbers(0, 0, 1E15))
 				
+				testInterpreter.addRelativeOrbit('SAT2', 'MOON')
+				testInterpreter.addRelativeOrbit('SAT3', 'MOON')
+				//testInterpreter.addRelativeOrbit('MOON', 'MOON')
+				
+				/*testInterpreter.addRelativeOrbit('SAT2', 'EARTH')
+				testInterpreter.addRelativeOrbit('SAT3', 'EARTH')
+				testInterpreter.addRelativeOrbit('MOON', 'EARTH')*/
+								
 				const testGrapher = new grapher()
-				const objVisibility = testInterpreter.checkVisibility('OBS', 'SAT', [0, 0, 0], 6.3711*1E+6)
 				
-				//const sweep2 = testInterpreter.checkSweep('SAT2', Vect3D.fromNumbers(0, 0, 0), 4)
-				
-				const orbitPrm1 = testInterpreter.getOrbitPrm('SAT', Vect3D.fromNumbers(0, 0, 0))
+				/*const outputBox = document.querySelector('.output-telemetry')
+				const orbitPrm1 = testInterpreter.getOrbitPrm('MOON', Vect3D.fromNumbers(0, 0, 0))
 				const orbitPrm2 = testInterpreter.getOrbitPrm('SAT2', Vect3D.fromNumbers(0, 0, 0))
 				
-				console.log(orbitPrm1)
-				console.log(orbitPrm2)
+				outputBox.appendChild(prmListTable(
+					orbPrmFormat,
+					orbitPrm1,
+					'Луна',
+					'orbdata-MOON')
+				)
 				
+				outputBox.appendChild(prmListTable(
+					orbPrmFormat,
+					orbitPrm2,
+					'Объект SAT2',
+					'orbdata-SAT2')
+				)*/
+								
 				testGrapher
 					.init(document.querySelector('.output-canvas'))
-					.setRotations(45.01/57.3, 0.01/57.3, -255.01/57.3)
+					.setRotations(0.01/57.3, 0.01/57.3, 90.01/57.3)
 								
-				const TR1 = testGrapher.transformPointArray(testInterpreter.trajectories['SAT'].points)
-				const TR2 = testGrapher.transformPointArray(testInterpreter.trajectories['SAT2'].points)
+
+				/*const TR1 = testGrapher.transformPointArray(testInterpreter.trajectories['EARTH'].points)
+				const TR2 = testGrapher.transformPointArray(testInterpreter.trajectories['MOON'].points)
+				const TR3 = testGrapher.transformPointArray(testInterpreter.trajectories['SAT2'].points)*/
+				const TR1 = testGrapher.transformPointArray(testInterpreter.relativeTrajectories[0].points)
+				const TR2 = testGrapher.transformPointArray(testInterpreter.relativeTrajectories[1].points)
+				//const TR3 = testGrapher.transformPointArray(testInterpreter.relativeTrajectories[2].points)
+				
+				const dX = 10.5
 				
 				testGrapher
-					.setBounds(-1.5*1E+7, 1.5*1E+7, -1.5*1E+7, 1.5*1E+7)
+					.setBounds(-0.625*dX*1E+7, 0.625*dX*1E+7, -0.25*dX*1E+7, dX*1E+7)
 					.adjust()
-					.draw3DAxis (0.75*1E7, 0.75*1E7, 0.75*1E7)
+					.draw3DAxis (0.75*1E8, 0.75*1E8, 0.75*1E8)
+					.setLineColor('#b0997a')
 					.drawGraphic(TR1.xArr, TR1.yArr)
+					.setLineColor('#309f66')
 					.drawGraphic(TR2.xArr, TR2.yArr)
-					.drawGlobe(6.3711*1E+6)
-					.drawPoint(...testObserver.point)
-					
-				//const outputBox = document.querySelector('.output-telemetry')
-				//const areas = ArrayExtended.extractColumn(sweep2, 'areaSwipe')
-				//const areaStats = areas.getStatistics()
-				
-				/*outputBox.appendChild(outputTable([
-					{ ID: 'dt', name: 'Время', unit: 's', format: 0 },
-					{ ID: 'areaSwipe', name: 'Площадь', unit: 'm2', format: 0 }
-					],
-					sweep2,
-					'Заметаемые площади (II закон Кеплера), спутник-2 (эллипт.орбита)',
-					'area-box'
-				))
-				
-				outputBox.appendChild(outputTable([
-					{ ID: 't', name: 'Время', unit: 'с', format: 1 },
-					{ ID: 'ascend', name: 'Возвышение', unit: 'рад', format: 2 },
-					{ ID: 'azimuth', name: 'Азимут', unit: 'рад', format: 2 },
-					{ ID: 'range', name: 'Дальность', unit: 'м', format: 0 },
-					],
-					objVisibility,
-					'Видимость спутника-1(круговая орбита) из точки North: 1.5`, East: 1.5`',
-					'visibility-box'
-				))*/
-				
-				/*document
-					.getElementById('area-box')
-					.appendChild(writeStatistics(areaStats, 3))
-				*/
-				
+					//.setLineColor('#999999')
+					//.drawGraphic(TR3.xArr, TR3.yArr)
+					.drawGlobe(1.737*1E+6)
+					.drawPoint(0, 0, 0)
 
 			})
 		</script>

@@ -37,6 +37,9 @@ canvas {
 
 .output-telemetry__container th, .output-telemetry__container td { border: 1px solid #000;}
 
+.output-telemetry__orbit_prm {
+	margin-right: 30px;
+}
 
 table, tr, th, td {
 	border-collapse: collapse;

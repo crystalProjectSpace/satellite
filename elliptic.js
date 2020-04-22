@@ -57,7 +57,7 @@ class KeplerBody {
 		const range2_5 = range2 * range
 		
 		const accelScalar1 = G0 * mAnother / range2_5
-		
+
 		if( this.lightweight ) {
 			return { accel1: [
 				accelScalar1 * dX,
@@ -143,7 +143,7 @@ class KeplerSystem {
 		return result		
 	}
 	// численное интегрирование уравнений движения группы тело
-	integrate(N, frequency, dT) {
+	integrate(/*N*/flag, frequency, dT) {
 		let i = 0
 		let Tau = 0
 		let k = 1
@@ -163,8 +163,8 @@ class KeplerSystem {
 		})
 
 		const kinematics0 = kinematics.map(kineItem => kineItem.slice())
-		
-		while( i < N ) {
+		while( flag(kinematics, Tau) ) {
+			
 			const K0 = this.getDerivatives(kinematics)
 			for(let j = 0; j < this.nBody; j++) {
 				kinematics[j][0] = kinematics0[j][0] + K0[j][0] * dT05
@@ -216,7 +216,7 @@ class KeplerSystem {
 			i++
 
 			if(k === frequency) {
-				const orbitPrm = {}//[]
+				const orbitPrm = {}
 				for(let j = 0; j < this.nBody; j++) {
 					orbitPrm[this.bodies[j].ID] = [
 						kinematics[j][0],
