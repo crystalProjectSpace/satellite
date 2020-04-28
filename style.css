@@ -11,7 +11,11 @@
 canvas {
 	display: block;
 	border: 1px solid #000;
-	margin: 15px auto;
+	margin: 15px 50px;
+}
+
+.output-canvas {
+	grid-area: graph;
 }
 
 .output-telemetry {
@@ -19,6 +23,28 @@ canvas {
 	display: flex;
 	flex-direction: row;
 	align-items: flex-start;
+	grid-area: telemetry;
+}
+
+.output-log {
+	grid-area: log;
+	position: fixed;
+	top: 50px;
+	right: 50px;
+	width: 425px;
+	padding: 10px;
+	background-color: #007abc;
+	color: #fff;
+}
+
+.output-log:empty {
+	visibility: hidden;
+}
+
+.output-controls {
+	display: block;
+	grid-area: control;
+	margin: 15px 50px;
 }
 
 .output-telemetry__container {
@@ -38,6 +64,34 @@ canvas {
 .output-telemetry__container th, .output-telemetry__container td { border: 1px solid #000;}
 
 .output-telemetry__orbit_prm {
+	margin-right: 30px;
+}
+
+.output {
+	display: grid;
+	grid-template-areas: "graph log"
+	"telemetry log"
+	"control control";
+	grid-template-cols: 70% 30%
+	70% 30%
+	50% 50%;
+}
+
+.output-controls__group {
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-start;
+	align-items: stretch;
+}
+
+.output-controls__btn {
+	display: block;
+	border: 1px solid #000;
+	background-color: #fff;
+	padding: 10px 45px;
+	text-align: center;
+	font-size: 1rem;
+	font-weight: normal;
 	margin-right: 30px;
 }
 
