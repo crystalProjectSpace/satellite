@@ -45,17 +45,27 @@ class ModelInterface {
 		this.startBtn.addEventListener('click', e => {
 			e.preventDefault()
 			e.stopPropagation()
+			
+			this.startBtn.classList.add('disabled')
+			this.drawBtn.classList.add('disabled')
+			
 			this.calculate(
 				3600 * 24 * 4,
 				2.5,
 				10
 			)
+			
+			this.startBtn.classList.remove('disabled')
+			this.drawBtn.classList.remove('disabled')
+			
 			this.logBox.innerText = this.log
 		})
 		// кнопка отрисовки
 		this.drawBtn.addEventListener('click', e => {
 			e.preventDefault()
 			e.stopPropagation()
+			this.drawBtn.classList.add('disabled')			
+			
 			this.chooseReferenceFrame('MOON')
 				.addRelativeTrajectory('SAT2')
 				.addRelativeTrajectory('SAT3')
@@ -69,6 +79,8 @@ class ModelInterface {
 				.drawAxis(0.75*1E+8, 0.75*1E+8, 0.75*1E+8)
 				.drawRelTrajectory('SAT2', '#b0997a')
 				.drawRelTrajectory('SAT3', '#309f66')
+				
+			this.drawBtn.classList.remove('disabled')
 			this.logBox.innerText = this.log
 		})
 		
@@ -174,13 +186,12 @@ class ModelInterface {
 	}
 	// отрисовать относительную траекторию
 	drawRelTrajectory(ID, color) {
-		const {xArr, yArr} = this.grapher.transformPointArray(
-			this.analyzer.relativeTrajectories.find( trajectory => trajectory.relObjectID === ID && trajectory.refObjectID === this.referenceFrame).points
-		)
+		const {points, timestamps} = this.analyzer.relativeTrajectories.find( trajectory => trajectory.relObjectID === ID && trajectory.refObjectID === this.referenceFrame)
+		const {xArr, yArr} = this.grapher.transformPointArray(points)
 
 		this.grapher
 			.setLineColor(color)
-			.drawGraphic(xArr, yArr)
+			.drawTimeline(xArr, yArr, timestamps)
 		return this
 	}
 	// вывести лог запуска модели в консоль 

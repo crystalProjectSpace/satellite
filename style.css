@@ -95,6 +95,10 @@ canvas {
 	margin-right: 30px;
 }
 
+.output-controls__btn.disabled {
+	opacity: 0.5;
+}
+
 table, tr, th, td {
 	border-collapse: collapse;
 }

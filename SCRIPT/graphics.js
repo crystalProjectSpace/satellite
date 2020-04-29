@@ -7,14 +7,14 @@ class grapher {
 		this.context = null // графический контекст
 		// стиль линии
 		this.lineStyle = {
-			width: 1,
+			width: 2,
 			color: '#e21a1a'
 		}
 		// стиль маркера
 		this.markerStyle = {
-			radius: 3,
+			size: 5,
 			color: '#e21a1a',
-			frequency: 2,
+			frequency: 1000,
 		}
 		// стиль координатных осей
 		this.axisStyle = {
@@ -42,8 +42,11 @@ class grapher {
 		this.dX = 0
 		this.dY = 0
 		this.graphMargin = 1
-		
-		this.rotations = null // матрица вращений
+		// матрица вращений
+		this.rotations = [
+			[1 ,0, 0],
+			[0, 1, 0],
+			[0, 0, 1]] 
 
 		// границы области отрисовки
 		this.bounds = {
@@ -194,6 +197,71 @@ class grapher {
 		this.context.stroke()
 		return this
 	}
+// отрисовать график с временными метками
+	drawTimeline(xArr, yArr, timestamps) {
+		// параллельная графику засечка
+		const crossTick = (x0, y0, x1, y1, x2, y2, dTick) => {
+			const dX = x2 - x0
+			const dY = y2 - y0
+			const delta = Math.sqrt(dX * dX + dY * dY)
+			const kx = dX / delta
+			const ky = dY / delta
+			
+			const ny = -kx * dTick
+			const nx = ky * dTick
+			
+			return {
+				tick1: {x: x1 + nx, y: y1 + ny},
+				tick2: {x: x1 - nx, y: y1 - ny},
+			}
+		}
+				
+		const iMax = xArr.length
+		
+		this.context.strokeStyle = this.lineStyle.color
+		this.context.lineWidth = this.lineStyle.width
+		
+		this.context.font = `${this.numberStyle.fontSize}px ${this.numberStyle.fontFamily}`
+		this.context.fillStyle = this.numberStyle.color
+				
+		let x0 = this.transformX(xArr[0])
+		let y0 = this.transformY(yArr[0]) 
+		let x1, y1
+		let k = 0
+		
+		
+		for(let i = 1; i < iMax; i++) {
+			this.context.beginPath()
+			x1 = this.transformX(xArr[i])
+			y1 = this.transformY(yArr[i])
+			this.context.moveTo(x0, y0)
+			this.context.lineTo(x1, y1)
+			this.context.stroke()
+			
+			if( k === this.markerStyle.frequency) {
+				k = 0
+				const x_05 = (x1 + x0) * 0.5
+				const y_05 = (y1 + y0) * 0.5
+				const {tick1, tick2} = crossTick(
+					x0, y0,
+					x_05, y_05,
+					x1, y1,
+					this.markerStyle.size)
+				this.context.beginPath()
+				this.context.moveTo(tick1.x, tick1.y)
+				this.context.lineTo(tick2.x, tick2.y)
+				this.context.stroke()
+				this.context.fillText(`t=${timestamps[i]}s`, x_05, y_05 )
+			} else {
+				k++
+			}
+			
+			x0 = x1
+			y0 = y1
+		}
+		
+		return this
+	}	
 // создать матрицу вращений
 	setRotations(alpha, betha, gamma) {
 		const CA = Math.cos(alpha)
@@ -287,19 +355,25 @@ class grapher {
 		this.context.strokeStyle = this.axisStyle.color
 		this.context.lineWidth = this.axisStyle.width
 		
+		this.context.font = `${this.numberStyle.fontSize}px ${this.numberStyle.fontFamily}`
+		this.context.fillStyle = this.numberStyle.color
+		
 		this.context.beginPath()
 		this.context.moveTo(X0, Y0)
 		this.context.lineTo(X_X, X_Y)
+		this.context.fillText('OX', X_X, X_Y )
 		this.context.stroke()
 		
 		this.context.beginPath()
 		this.context.moveTo(X0, Y0)
 		this.context.lineTo(Y_X, Y_Y)
+		this.context.fillText('OY', Y_X, Y_Y )
 		this.context.stroke()
 		
 		this.context.beginPath()
 		this.context.moveTo(X0, Y0)
 		this.context.lineTo(Z_X, Z_Y)
+		this.context.fillText('OZ', Z_X, Z_Y )
 		this.context.stroke()
 		
 		return this
