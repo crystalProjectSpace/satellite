@@ -24,7 +24,7 @@ class TrajectoryAnalyze {
 		this.observers[ID] = observer
 		return this
 	}
-	// Добавить из массива сырых траекторны
+	// Добавить из массива сырых траекторных данных
 	addTrajectory( data, ID ) {
 		const lx  = data.length
 		const points = []
@@ -197,6 +197,20 @@ class TrajectoryAnalyze {
 		}
 		
 		this.relativeTrajectories.push(relTraj)
+		return this
+	}
+	// очистить данные об относительных траекториях
+	clearRelativeTrajectories()
+	{
+		this.relativeTrajectories.forEach(relTrajectory => {
+			relTrajectory.timestamps.length = 0
+			relTrajectory.relObjectID = ''
+			relTrajectory.refObjectID = ''
+			relTrajectory.points.length = 0
+			relTrajectory.speed.length = 0
+		})
+		
+		this.relativeTrajectories.length = 0
 		return this
 	}
 }

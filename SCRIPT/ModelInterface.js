@@ -12,19 +12,11 @@ class ModelInterface {
  		this.startBtn = null // кнопка запуска модели
 		this.drawBtn = null // кнопка отрисовки
 		this.logBox = null // контейнер для вывода логов
+		this.selectors = null // блок селекторов 
+
 		this.referenceFrame = '' // ID элемента, служащего точкой отсчета
 		
-		this.status = 'EMPTY' // статус модели
-		/** 
-		* Нужны для блокировки органов управления и вывода сведений о состоянии программы
-		EMPTY - ИД не загружены, расчет и графика недоступны
-		LOADED - ИД загружены, доступен расчет, графика недоступна
-		CALC - идет расчет, управление заблокировано
-		READY - ИД загружены и обработаны, можно строить графику
-		*/
-		
 		this.log = '' // лог действий модели
-		
 	}
 	// смонтировали управление моделью
 	init(root) {
@@ -34,6 +26,7 @@ class ModelInterface {
 		this.startBtn = this.root.querySelector('.starter')
 		this.drawBtn = this.root.querySelector('.grapher')
 		this.logBox = this.root.querySelector('.output-log')
+		this.selectorBox = this.root.querySelector('.selects')
 		// кнопка загрузки исходных данных
 		this.loadBtn.addEventListener('click', e => {
 			e.preventDefault()
@@ -66,9 +59,7 @@ class ModelInterface {
 			e.stopPropagation()
 			this.drawBtn.classList.add('disabled')			
 			
-			this.chooseReferenceFrame('MOON')
-				.addRelativeTrajectory('SAT2')
-				.addRelativeTrajectory('SAT3')
+			this
 				.boundDrawRegion(
 					-6.5 * 1E+7,
 					6.5 * 1E+7,
@@ -85,6 +76,48 @@ class ModelInterface {
 		})
 		
 		return this
+	}
+	// cформировать блок для выбора небесных тел в качестве опорной точки
+	renderReferSelector() {
+		const {element, optionItems} = renderMultiselect(
+			this.model.bodies.map(body => body.ID),
+			'Выбор опорной точки'
+		)
+		
+		this.selectorBox.appendChild(element)
+		
+		optionItems.forEach(optionItem => {
+			optionItem.addEventListener('click', e => {
+				e.preventDefault()
+				e.stopPropagation()				
+				this
+					.chooseReferenceFrame(optionItem.dataset['ID'])
+					.logBox.innerText = this.log
+				element.classList.remove('active')
+			})
+		})
+		return this
+	}
+	// сформировать блок выбора относительных траекторий небесных тел
+	renderRelativeSelector() {
+		const {element, optionItems} = renderMultiselect(
+			this.model.bodies.map(body => body.ID),
+			'Сформировать относительную траекторию'
+		)
+		
+		this.selectorBox.appendChild(element)
+		
+		optionItems.forEach(optionItem => {
+			optionItem.addEventListener('click', e => {
+				e.preventDefault()
+				e.stopPropagation()				
+				this
+					.addRelativeTrajectory(optionItem.dataset['ID'])
+					.logBox.innerText = this.log
+				element.classList.remove('active')
+			})
+		})
+		return this		
 	}
 	// задать глобальный Север
 	setGlobalNorth(xNorth, yNorth, zNorth) {
@@ -110,7 +143,10 @@ class ModelInterface {
 			data,
 			tau: 0
 		})
-		this.log += `-- initial data acquired (nBodies = ${this.model.nBody}); \n`
+		this
+			.renderReferSelector()
+			.renderRelativeSelector()
+			.writeLog(`initial data acquired (nBodies = ${this.model.nBody})`)
 		return this
 	}
 	// Добавить наблюдателя
@@ -123,7 +159,7 @@ class ModelInterface {
 	}
 	// провести вычисления продолжительностью tau секунд с шагом dT и скважностью записи результатов N
 	calculate(tauMax, dT, N) {
-		this.log += `-- calculation started;\n`
+		this.writeLog(`calculation started`)
 		const tauStart = performance.now()
 		
 		this.tempResults = this.model.integrate(
@@ -131,32 +167,34 @@ class ModelInterface {
 			N,
 			dT
 		)
-		this.log += `-- calculation done. time spent ${(performance.now() - tauStart).toFixed(2)} ms; \n`
+		this.writeLog(`calculation done. time spent ${(performance.now() - tauStart).toFixed(2)} ms`)
 
 		const iMax = this.tempResults.length - 1
 		const orbitPrm = this.tempResults[iMax].orbitPrm
 		
 		const tauStore = performance.now()
-		this.log += `-- results being saved as temporal breakpoint; \n`
-		// записали промежуточный результат расчета
-		this.breakPoints.push({
-			tau: this.tempResults[iMax].Tau,
-			data: this.breakPoints[0].data.map(objectInfo => ({
-				m: objectInfo.m,
-				ID: objectInfo.ID,
-				lightWeight: objectInfo.lightWeight,
-				kinematics: orbitPrm[objectInfo.ID].slice()
-			}))
-		})
-		this.log += `-- temporal results saved. time spent ${(performance.now() - tauStore).toFixed(2)} ms; \n`
+		this
+			.writeLog(`results being saved as temporal breakpoint`)
+			.breakPoints.push({ // записали промежуточный результат расчета
+				tau: this.tempResults[iMax].Tau,
+				data: this.breakPoints[0].data.map(objectInfo => ({
+					m: objectInfo.m,
+					ID: objectInfo.ID,
+					lightWeight: objectInfo.lightWeight,
+					kinematics: orbitPrm[objectInfo.ID].slice()
+				}))
+			})
+		this.writeLog(`temporal results saved. time spent ${(performance.now() - tauStore).toFixed(2)} ms`)
 		
 		return this
 	}
 	// выбрать точку отсчета для построения относительных траекторий
 	chooseReferenceFrame(ID) {
-		this.log += `-- reference frame set for body __${ID}__; \n`
+		this
+			.writeLog(`reference frame set for body __${ID}__`)
+			.analyzer.clearRelativeTrajectories()
 		this.referenceFrame = ID
-		this.analyzer.addTrajectory( this.tempResults,ID) 
+		this.analyzer.addTrajectory( this.tempResults, ID) 
 		return this
 	}
 	// Сформировать относительную траекторию
@@ -165,7 +203,7 @@ class ModelInterface {
 		this.analyzer
 			.addTrajectory(this.tempResults, ID)
 			.addRelativeOrbit(ID, this.referenceFrame) // сформировали траекторию относительно выбранной системы координат
-		this.log += `-- relative trajectory for ${ID} (reference frame: ${this.referenceFrame})saved. time spent ${(performance.now() - tauTranslate).toFixed(2)} ms; \n`
+		this.writeLog(`relative trajectory for ${ID} (reference frame: ${this.referenceFrame})saved. time spent ${(performance.now() - tauTranslate).toFixed(2)} ms`)
 		return this
 	}
 	// Сформировать область построения
@@ -194,9 +232,8 @@ class ModelInterface {
 			.drawTimeline(xArr, yArr, timestamps)
 		return this
 	}
-	// вывести лог запуска модели в консоль 
-	printLog(){
-		console.log(this.log)
+	writeLog(msg) {
+		this.log += `-- ${msg}; \n`
 		return this
 	}
 }

@@ -76,14 +76,15 @@ canvas {
 	70% 30%
 	50% 50%;
 }
-
+/* блок для группы инпутов */
 .output-controls__group {
 	display: flex;
 	flex-direction: row;
 	justify-content: flex-start;
 	align-items: stretch;
+	padding-top: 20px;
 }
-
+/* кнопка выполнения действия */
 .output-controls__btn {
 	display: block;
 	border: 1px solid #000;
@@ -97,6 +98,47 @@ canvas {
 
 .output-controls__btn.disabled {
 	opacity: 0.5;
+}
+/* рендерящийся скриптом список опций */
+.output-controls__selector {
+	position: relative;
+	min-height: 250px;
+}
+
+.selector-btn {
+	display: block;
+	text-align: center;
+	background-color: #fff;
+	font-size: 1rem;
+	padding: 5px 15px;
+	border: 1px solid #000;
+}
+
+.output-controls__selector .selector-options { display: none; }
+
+.output-controls__selector.active .selector-options { display: block; }
+
+.selector-options {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: 100%;
+	border: 1px solid #000;
+	background-color: #fff;
+}
+
+.selector-option__btn {
+	display: block;
+	padding: 5px 10px 5px 20px;
+	background
+	text-align: left;
+	font-size: 1rem;
+	background-color: #fff;
+	width: 100%;
+}
+
+.selector-option__btn:not(:last-child) {
+	border-bottom: 1px solid #000;
 }
 
 table, tr, th, td {

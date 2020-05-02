@@ -7,7 +7,7 @@
 		<script src="./SCRIPT/arraysExtended.js"></script>
 		<script src="./SCRIPT/graphics.js"></script>
 		<script src="./SCRIPT/TrajectoryAnalyze.js"></script>
-		<script src="./SCRIPT/tableUtils.js"></script>
+		<script src="./SCRIPT/RenderUtils.js"></script>
 		<script src="./SCRIPT/ModelInterface.js"></script>
 		<link rel="stylesheet" href="./style.css" />
 	</head>
@@ -24,7 +24,7 @@
 					</div>
 					<div class="output-log"></div>
 					<form class="output-controls">
-						<div class="output-controls__group">
+						<div class="output-controls__group btns">
 							<button
 								class="output-controls__btn loader" >
 								Загрузить ИД
@@ -38,9 +38,8 @@
 								Построение графики
 							</button>
 						</div>
+						<div class="output-controls__group selects"></div>
 						<!-- 
-						Придумать метод и интерфейс для выбора "точки обзора"
-						Придумать метод и интерфейс для запоминания траекторий отн.точки обзора
 						управление камерой -повороты по 3 осям
 						управление область просмотра
 						-->

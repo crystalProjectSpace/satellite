@@ -101,3 +101,35 @@ const orbPrmFormat = [
 	{ ID: 'tauOrbit', name: 'Период обращения', unit: 'с', format: 0 },
 	{ ID: 'inclination', name: 'Наклонение', unit: 'град', format: 2, koef: 57.295 }
 ]
+// отрисовать блок мультивыбора
+const renderMultiselect = (options, name) => {
+	const element = document.createElement('div')
+	element.classList.add('output-controls__selector')
+	
+	const revealBtn = document.createElement('button')
+	revealBtn.classList.add('selector-btn')
+	revealBtn.innerText = name
+	revealBtn.addEventListener('click', e => {
+		e.preventDefault()
+		e.stopPropagation()		
+		element.classList.add('active')
+	})
+	
+	const optionList = document.createElement('div')
+	optionList.classList.add('selector-options')
+	
+	const optionItems = options.map( option => {
+		const optionBtn = document.createElement('button')
+		optionBtn.classList.add('selector-option__btn')
+		optionBtn.innerText = option
+		optionBtn.dataset['ID'] = option
+		return optionBtn
+	})
+	
+	optionItems.forEach(optionItem => { optionList.appendChild(optionItem)})
+	
+	element.appendChild(revealBtn)
+	element.appendChild(optionList)
+	
+	return { element, optionItems }
+}

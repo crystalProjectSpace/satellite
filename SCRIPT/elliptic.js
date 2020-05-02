@@ -143,7 +143,7 @@ class KeplerSystem {
 		return result		
 	}
 	// численное интегрирование уравнений движения группы тело
-	integrate(/*N*/flag, frequency, dT) {
+	integrate(flag, frequency, dT) {
 		let i = 0
 		let Tau = 0
 		let k = 1
